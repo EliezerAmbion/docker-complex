@@ -37,6 +37,10 @@ services:
     volumes:
       - /app/node_modules
       - ./client:/app
+    environment:
+      # - CHOKIDAR_USEPOLLING=true
+      # - WDS_SOCKET_HOST=localhost
+      - WDS_SOCKET_PORT=0
   worker:
     build:
       dockerfile: Dockerfile.dev
