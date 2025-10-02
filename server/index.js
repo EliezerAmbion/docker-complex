@@ -29,31 +29,49 @@ pgClient.on('connect', (client) => {
     .catch((err) => console.log(err));
 });
 
-// Redis Client Setup
-const redis = require('redis');
-const redisClient = redis.createClient({
-  host: keys.redisHost,
-  port: keys.redisPort,
-  retry_strategy: () => 1000,
+// Redis Client Setup (redis v4)
+const { createClient } = require('redis');
+
+const redisClient = createClient({
+  url: `redis://${keys.redisHost}:${keys.redisPort}`,
 });
 
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+
+// Connect once at startup
+(async () => {
+  await redisClient.connect();
+})();
+
+// Create a separate publisher client
 const redisPublisher = redisClient.duplicate();
+(async () => {
+  await redisPublisher.connect();
+})();
 
 // Express Route Handlers
 app.get('/', (req, res) => {
   res.send('Hi');
 });
 
-app.post('/values/all', async (req, res) => {
-  const values = await pgClient.query('SELECT * FROM values');
-
-  res.send(values.rows);
+app.get('/values/all', async (req, res) => {
+  try {
+    const values = await pgClient.query('SELECT * FROM values');
+    res.send(values.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error querying Postgres');
+  }
 });
 
 app.get('/values/current', async (req, res) => {
-  redisClient.hgetall('values', (err, values) => {
+  try {
+    const values = await redisClient.hGetAll('values');
     res.send(values);
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error querying Redis');
+  }
 });
 
 app.post('/values', async (req, res) => {
@@ -63,11 +81,16 @@ app.post('/values', async (req, res) => {
     return res.status(422).send('Index too high');
   }
 
-  redisClient.hset('values', index, 'Nothing yet!');
-  redisPublisher.publish('insert', index);
-  pgClient.query('INSERT INTO values(number) VALUES($1)', [index]);
+  try {
+    await redisClient.hSet('values', index, 'Nothing yet!');
+    await redisPublisher.publish('insert', index);
+    pgClient.query('INSERT INTO values(number) VALUES($1)', [index]);
 
-  res.send({ working: true });
+    res.send({ working: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error inserting value');
+  }
 });
 
 app.listen(5000, (err) => {
