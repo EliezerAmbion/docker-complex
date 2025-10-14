@@ -1,0 +1,20 @@
+# 📝 This defines a PersistentVolumeClaim (PVC) — a request for storage in Kubernetes.
+# The PVC asks the cluster for 2Gi of storage that can be read and written by a single node (ReadWriteOnce).
+# Kubernetes will bind this claim to a matching PersistentVolume (PV) that meets the request.
+#
+# 📦 AccessModes:
+# - ReadWriteOnce (RWO): The volume can be mounted as read-write by only one node at a time.
+# - ReadOnlyMany (ROX): The volume can be mounted as read-only by many nodes simultaneously.
+# - ReadWriteMany (RWX): The volume can be mounted as read-write by many nodes simultaneously.
+# - ReadWriteOncePod (RWOP): The volume can be mounted as read-write by only one pod (Kubernetes v1.22+).
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database-persistent-volume-claim
+spec:
+  accessModes:
+    - ReadWriteOnce # The volume can be mounted as read-write by only one node
+  resources:
+    requests:
+      storage: 2Gi # Requests 2 gigabytes of storage from the cluster

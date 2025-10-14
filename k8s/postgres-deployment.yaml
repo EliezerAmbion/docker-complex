@@ -1,0 +1,37 @@
+# 🧩 This defines a Deployment for a PostgreSQL database.
+# It runs one pod containing a Postgres container and attaches persistent storage using a PersistentVolumeClaim (PVC).
+# The PVC ensures that database data is stored outside the container, so it’s not lost when the pod restarts.
+#
+# 🗂️ Key parts:
+# - volumes: References a PersistentVolumeClaim to provide persistent disk storage.
+# - volumeMounts: Mounts that storage into the container’s filesystem.
+# - mountPath: The directory inside the container where data is stored.
+# - subPath: Ensures data is written to a subdirectory within the mounted volume (useful when sharing volumes).
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: postgres # Match pods with this label
+  template:
+    metadata:
+      labels:
+        component: postgres # Label applied to pods created by this deployment
+    spec:
+      volumes:
+        - name: postgres-storage # Defines a volume named "postgres-storage"
+          persistentVolumeClaim:
+            claimName: database-persistent-volume-claim # Use existing PVC for persistent storage
+      containers:
+        - name: postgres
+          image: postgres # Official PostgreSQL image
+          ports:
+            - containerPort: 5432 # Default Postgres port
+          volumeMounts:
+            - name: postgres-storage # Must match the volume name above
+              mountPath: /var/lib/postgresql/data # Directory where Postgres stores its data
+              subPath: postgres # Store data in a specific subdirectory within the volume
