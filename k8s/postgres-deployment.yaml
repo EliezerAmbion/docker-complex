@@ -28,7 +28,7 @@ spec:
             claimName: database-persistent-volume-claim # Use existing PVC for persistent storage
       containers:
         - name: postgres
-          image: postgres # Official PostgreSQL image
+          image: postgres:17 # Official PostgreSQL image
           ports:
             - containerPort: 5432 # Default Postgres port
           volumeMounts:
