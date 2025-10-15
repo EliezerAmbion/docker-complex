@@ -1,0 +1,37 @@
+# 🌐 This defines an Ingress — a Kubernetes resource that routes external HTTP traffic
+# to internal services within the cluster via the NGINX Ingress Controller.
+#
+# ⚙️ Key updates for modern Kubernetes versions (v1.19+):
+# - Use 'spec.ingressClassName' instead of the deprecated annotation 'kubernetes.io/ingress.class'
+# - Use 'pathType: Prefix' to define URL matching behavior
+# - Use 'service.name' and 'service.port.number' for backends
+#
+# 🧭 Rules:
+# - "/" → Routes to client service (frontend)
+# - "/api/" → Routes to server service (backend)
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-service
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: / # Rewrites the request path to "/"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: client-cluster-ip-service
+                port:
+                  number: 3000
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: server-cluster-ip-service
+                port:
+                  number: 5000
